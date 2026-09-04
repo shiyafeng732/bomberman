@@ -111,3 +111,6 @@ screenshots/*.webm
 
 replays/
 results/
+# agent logs (large, regenerated on every run)
+agent_code/*/logs/
+logs/
