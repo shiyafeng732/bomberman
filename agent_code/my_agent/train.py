@@ -76,7 +76,7 @@ REWARDS = {
     ESCAPED_DANGER: 3.0,
     STAYED_IN_DANGER: -1.0,
     MOVED_INTO_DANGER: -4.0,
-    GOOD_BOMB: 10.0,
+    GOOD_BOMB: 5.0,
     USELESS_BOMB: -1.0,
     SUICIDAL_BOMB: -5.0,
 }
@@ -84,10 +84,17 @@ REWARDS = {
 # Controlled experiments override single reward values through the environment,
 # so a sweep changes exactly one number and never edits this file:
 #   REWARD_OVERRIDES='{"GOOD_BOMB": 3}' python main.py play ...
-for _event, _value in json.loads(os.environ.get("REWARD_OVERRIDES", "{}")).items():
-    if _event not in REWARDS:
-        raise KeyError(f"REWARD_OVERRIDES: {_event!r} is not one of {sorted(REWARDS)}")
-    REWARDS[_event] = float(_value)
+_raw_overrides = os.environ.get("REWARD_OVERRIDES", "").strip()
+if _raw_overrides:
+    try:
+        _overrides = json.loads(_raw_overrides)
+    except json.JSONDecodeError as _error:
+        raise ValueError(f"REWARD_OVERRIDES is not valid JSON: {_raw_overrides!r}") from _error
+    for _event, _value in _overrides.items():
+        if _event not in REWARDS:
+            raise KeyError(f"REWARD_OVERRIDES names {_event!r}, which is not one of {sorted(REWARDS)}")
+        REWARDS[_event] = float(_value)
+    print(f"[{__name__}] REWARD_OVERRIDES active: {_overrides}")
 
 
 def setup_training(self):
@@ -127,12 +134,15 @@ def add_custom_events(self, old_game_state, self_action, new_game_state, events)
 
     # --- did we get closer to a coin (or, if none is visible, to a crate)?
     old_coin, new_coin = coin_distance(old_game_state), coin_distance(new_game_state)
-    if old_coin >= 0 and new_coin >= 0:
+
+    fleeing = old_features[20] > 0
+
+    if not fleeing and old_coin >= 0 and new_coin >= 0:
         if new_coin < old_coin:
             events.append(MOVED_TOWARDS_COIN)
         elif new_coin > old_coin:
             events.append(MOVED_AWAY_FROM_COIN)
-    elif old_coin < 0 and old_features[20] == 0:      # no coin in sight and not fleeing a bomb
+    elif not fleeing and old_coin < 0:
         old_crate, new_crate = crate_distance(old_game_state), crate_distance(new_game_state)
         if old_crate >= 0 and new_crate >= 0:
             if new_crate < old_crate:

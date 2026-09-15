@@ -95,7 +95,7 @@ def bfs_first_step(free, start, targets, danger=None):
         pos, first, dist = queue.popleft()
         if pos in visited or not free[pos]:
             continue
-        if danger is not None and danger[pos] <= dist:
+        if danger is not None and danger[pos] < dist:
             continue                      # this tile explodes before/when we arrive
         visited.add(pos)
         if pos in targets:

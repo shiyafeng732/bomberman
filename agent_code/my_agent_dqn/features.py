@@ -95,7 +95,7 @@ def bfs_first_step(free, start, targets, danger=None):
         pos, first, dist = queue.popleft()
         if pos in visited or not free[pos]:
             continue
-        if danger is not None and danger[pos] <= dist:
+        if danger is not None and danger[pos] < dist:
             continue                      # this tile explodes before/when we arrive
         visited.add(pos)
         if pos in targets:
@@ -197,7 +197,7 @@ def state_to_features(game_state: dict) -> np.ndarray:
     f[20] = 1.0 if in_danger else 0.0
     f[21] = 1.0 if bombs_left else 0.0
     blast = blast_coords(field, pos)
-    f[22] = 1.0 if any(field[c] == 1 for c in blast) else 0.0
+    f[22] = sum(field[c] == 1 for c in blast) / 4.0
     f[23] = 1.0 if can_escape_after_bomb(field, free, danger, pos) else 0.0
     f[24] = 1.0 if any(o in blast for o in others) else 0.0
     f[25] = 1.0
