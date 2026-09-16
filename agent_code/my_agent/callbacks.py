@@ -30,13 +30,14 @@ def setup(self):
     # makes the curriculum (coins -> crates -> opponents) work: every training
     # stage starts where the previous one stopped. Delete the file to start over.
     if os.path.isfile(MODEL_FILE):
-        self.logger.info("Loading model from saved state.")
+        self.logger.info("Loading Linear weights from file.")
         with open(MODEL_FILE, "rb") as file:
             self.model = pickle.load(file)
+    elif self.train:
+        self.logger.info("Setting up a fresh Linear model.")
     else:
-        self.logger.info("Setting up model from scratch.")
-        # Small random weights break the symmetry between actions.
-        self.model = np.random.uniform(-0.01, 0.01, (len(ACTIONS), FEATURE_DIM))
+        raise FileNotFoundError(f"{MODEL_FILE} is missing, refusing to play with random weights")
+
 
 
 def q_values(self, features):

@@ -47,14 +47,18 @@ class DQN(nn.Module):
 
 def setup(self):
     """Called once when the agent is loaded. Prepares self.model."""
-    self.device = torch.device("cpu")          # the tournament runs on the CPU
+    self.device = torch.device("cpu")
+    torch.set_num_threads(1)
     self.model = DQN().to(self.device)
 
     if os.path.isfile(MODEL_FILE):
         self.logger.info("Loading DQN weights from file.")
         self.model.load_state_dict(torch.load(MODEL_FILE, map_location=self.device))
-    else:
+    elif self.train:
         self.logger.info("Setting up a fresh DQN.")
+    else:
+        raise FileNotFoundError(f"{MODEL_FILE} is missing, refusing to play with random weights")
+
 
     self.model.eval()
 
