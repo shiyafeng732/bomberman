@@ -56,8 +56,11 @@ def act(self, game_state: dict) -> str:
         return action
 
     q = q_values(self, features)
-    # Break ties randomly, otherwise the agent always prefers the first action.
-    best = np.flatnonzero(q == q.max())
+    allowed = np.ones(len(ACTIONS), dtype=bool)
+    allowed[:4] = features[:4] > 0
+    allowed[5] = features[21] > 0
+    
+    q = np.where(allowed, q, -np.inf)
     action = ACTIONS[np.random.choice(best)]
     self.logger.debug(f"Greedy action {action} with Q = {q.round(2)}")
     return action
