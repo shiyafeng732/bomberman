@@ -2,17 +2,18 @@
 Training code for Model 2 (Deep Q-Network).
 
 Differences to Model 1, and the reason why we expect it to be stronger:
-  * experience replay      -- we learn from a random batch of past transitions
-                              instead of only the last one, which removes the
-                              correlation between consecutive samples
-  * target network         -- the bootstrap value comes from a frozen copy of the
-                              network, which stabilises the moving target
-  * non-linear model       -- the MLP can represent interactions between features
-                              (e.g. "coin is left" AND "left tile is dangerous")
+1. We don't learn only from the latest transition. Past transitions go into a replay buffer 
+   and we sample a random batch for every step, so the samples are not consecutive anymore.
+2. The bootstrap value comes from a target network, which is a frozen copy that gets refreshed 
+   every TARGET_UPDATE steps. This keeps the target from moving around all the time.
+3. The MLP can represent interactions between features, like "coin is left" and "left tile 
+   is dangerous".
 
-Rewards and auxiliary events are identical to Model 1 on purpose, so the two
-models can be compared fairly.
+Rewards and auxiliary events are the same as in Model 1.
 """
+
+
+
 
 import csv
 import json
@@ -31,22 +32,23 @@ from .features import ACTIONS, coin_distance, crate_distance, state_to_features
 
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
-# ---------------------------------------------------------------- hyperparameters
-GAMMA = 0.95              # discount factor
-LEARNING_RATE = 5e-4      # Adam step size
-BATCH_SIZE = 64           # transitions per gradient step
-BUFFER_SIZE = 50000       # size of the experience replay memory
-LEARN_START = 1000        # collect this many transitions before the first update
-TARGET_UPDATE = 500       # copy weights to the target network every ... steps
+
+
+
+
+GAMMA = 0.95              
+LEARNING_RATE = 5e-4      
+BATCH_SIZE = 64           
+BUFFER_SIZE = 50000       
+LEARN_START = 1000        
+TARGET_UPDATE = 500       
 
 EPSILON_START = float(os.environ.get("EPSILON_START", 1.0))
 EPSILON_END = 0.05
-EPSILON_DECAY = 0.995     # multiplied with epsilon after every round
-
+EPSILON_DECAY = 0.995     
 LOG_EVERY = 100
 STATS_FILE = os.path.join(os.path.dirname(__file__), "training_stats.csv")
 
-# ---------------------------------------------------------------- custom events
 MOVED_TOWARDS_COIN = "MOVED_TOWARDS_COIN"
 MOVED_AWAY_FROM_COIN = "MOVED_AWAY_FROM_COIN"
 MOVED_TOWARDS_CRATE = "MOVED_TOWARDS_CRATE"
@@ -58,14 +60,17 @@ GOOD_BOMB = "GOOD_BOMB"
 USELESS_BOMB = "USELESS_BOMB"
 SUICIDAL_BOMB = "SUICIDAL_BOMB"
 
-# ---------------------------------------------------------------- reward table
+
+
+
+
 REWARDS = {
     e.COIN_COLLECTED: 5.0,
     e.KILLED_OPPONENT: 30.0,
     e.CRATE_DESTROYED: 1.0,
     e.COIN_FOUND: 0.5,
     e.SURVIVED_ROUND: 3.0,
-    e.KILLED_SELF: -20.0,     # fires together with GOT_KILLED, so a suicide costs -50 in total
+    e.KILLED_SELF: -20.0, # fires together with GOT_KILLED, so a suicide costs -50 in total
     e.GOT_KILLED: -30.0,
     e.INVALID_ACTION: -3.0,
     e.WAITED: -1.0,
@@ -81,9 +86,9 @@ REWARDS = {
     SUICIDAL_BOMB: -5.0,
 }
 
-# Controlled experiments override single reward values through the environment,
-# so a sweep changes exactly one number and never edits this file:
-#   REWARD_OVERRIDES='{"GOOD_BOMB": 3}' python main.py play ...
+
+
+
 _raw_overrides = os.environ.get("REWARD_OVERRIDES", "").strip()
 if _raw_overrides:
     try:
@@ -97,15 +102,17 @@ if _raw_overrides:
     print(f"[{__name__}] REWARD_OVERRIDES active: {_overrides}")
 
 
+
+
+
 def setup_training(self):
-    """Called once after setup() when the agent runs in training mode."""
     self.model.train()
     self.target_model = DQN().to(self.device)
     self.target_model.load_state_dict(self.model.state_dict())
     self.target_model.eval()
 
     self.optimizer = torch.optim.Adam(self.model.parameters(), lr=LEARNING_RATE)
-    self.loss_function = nn.SmoothL1Loss()          # Huber loss: robust to outliers
+    self.loss_function = nn.SmoothL1Loss()         
     self.memory = deque(maxlen=BUFFER_SIZE)
 
     self.epsilon = EPSILON_START
@@ -120,8 +127,7 @@ def setup_training(self):
     self.logger.info("DQN training setup complete.")
 
 
-def reset_round_counters(self):
-    """Per-round statistics that end up as one line in training_stats.csv."""
+def reset_round_counters(self): 
     self.round_reward = 0.0
     self.round_losses = []
     self.round_counts = {e.COIN_COLLECTED: 0, e.CRATE_DESTROYED: 0, e.BOMB_DROPPED: 0,
@@ -129,13 +135,11 @@ def reset_round_counters(self):
 
 
 def count_events(self, events):
-    """Add this step's events to the per-round counters."""
     for event in self.round_counts:
         self.round_counts[event] += events.count(event)
 
 
 def add_custom_events(self, old_game_state, self_action, new_game_state, events):
-    """Turn the difference between two game states into additional events."""
     if old_game_state is None or new_game_state is None:
         return
 
@@ -178,14 +182,13 @@ def add_custom_events(self, old_game_state, self_action, new_game_state, events)
 
 
 def reward_from_events(self, events: List[str]) -> float:
-    """Sum up the rewards of all events of one step."""
     reward = sum(REWARDS.get(event, 0.0) for event in events)
     self.logger.debug(f"Awarded {reward} for events {events}")
     return reward
 
 
+
 def optimize(self):
-    """One gradient step on a random batch from the replay memory."""
     if len(self.memory) < max(LEARN_START, BATCH_SIZE):
         return None
 
@@ -194,7 +197,6 @@ def optimize(self):
     actions = torch.tensor([ACTIONS.index(t.action) for t in batch], dtype=torch.int64)
     rewards = torch.tensor([t.reward for t in batch], dtype=torch.float32)
 
-    # states after the last step of a round are None -> their future value is 0
     non_final = torch.tensor([t.next_state is not None for t in batch])
     next_values = torch.zeros(BATCH_SIZE)
     if non_final.any():
@@ -208,13 +210,13 @@ def optimize(self):
     loss = self.loss_function(predicted, target)
     self.optimizer.zero_grad()
     loss.backward()
-    nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)   # keeps the updates stable
+    nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)   
     self.optimizer.step()
+    
     return loss.item()
 
 
 def game_events_occurred(self, old_game_state: dict, self_action: str, new_game_state: dict, events: List[str]):
-    """Called after every step: store the transition and take a gradient step."""
     add_custom_events(self, old_game_state, self_action, new_game_state, events)
     reward = reward_from_events(self, events)
 
@@ -236,14 +238,12 @@ def game_events_occurred(self, old_game_state: dict, self_action: str, new_game_
         self.logger.info(f"Target network updated at step {self.total_steps}.")
 
 
+
 def end_of_round(self, last_game_state: dict, last_action: str, events: List[str]):
-    """Called once at the end of a round: final update, statistics and saving."""
-    if last_game_state is None:      # cannot happen in a normal game, but keeps us safe
+    if last_game_state is None:      
         return
 
-    # The framework does not clear the event list between the last
-    # game_events_occurred and this call, so an agent that survived the final
-    # step receives that step's events twice. Only SURVIVED_ROUND is new here.
+    # events are not cleared between the last step and this call, so the final step's events arrive twice (only SURVIVED_ROUND is new)
     if getattr(self, "last_processed", None) == (last_game_state["round"], last_game_state["step"]):
         events = [event for event in events if event == e.SURVIVED_ROUND]
 
