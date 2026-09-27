@@ -1,0 +1,67 @@
+{
+    "by_agent": {
+        "my_agent_dqn": {
+            "bombs": 65,
+            "coins": 11,
+            "crates": 146,
+            "moves": 412,
+            "rounds": 3,
+            "score": 11,
+            "steps": 1200,
+            "time": 0.9196939468383789
+        },
+        "random_agent_0": {
+            "bombs": 3,
+            "crates": 12,
+            "invalid": 12,
+            "moves": 16,
+            "rounds": 3,
+            "score": 0,
+            "steps": 31,
+            "suicides": 3,
+            "time": 0.002023935317993164
+        },
+        "random_agent_1": {
+            "bombs": 3,
+            "crates": 9,
+            "invalid": 59,
+            "moves": 39,
+            "rounds": 3,
+            "score": 0,
+            "steps": 101,
+            "suicides": 3,
+            "time": 0.0065805912017822266
+        },
+        "random_agent_2": {
+            "bombs": 4,
+            "crates": 8,
+            "invalid": 27,
+            "moves": 13,
+            "rounds": 3,
+            "score": 0,
+            "steps": 44,
+            "suicides": 3,
+            "time": 0.0009999275207519531
+        }
+    },
+    "by_round": {
+        "Round 01 (2026-09-21 18-07-38)": {
+            "coins": 9,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        },
+        "Round 02 (2026-09-21 18-07-39)": {
+            "coins": 2,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        },
+        "Round 03 (2026-09-21 18-07-39)": {
+            "coins": 0,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        }
+    }
+}

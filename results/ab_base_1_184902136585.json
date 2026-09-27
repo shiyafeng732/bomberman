@@ -1,0 +1,80 @@
+{
+    "by_agent": {
+        "my_agent": {
+            "bombs": 236,
+            "coins": 18,
+            "crates": 243,
+            "moves": 1380,
+            "rounds": 5,
+            "score": 18,
+            "steps": 1724,
+            "suicides": 1,
+            "time": 0.8382461071014404
+        },
+        "random_agent_0": {
+            "bombs": 5,
+            "crates": 13,
+            "invalid": 62,
+            "moves": 19,
+            "rounds": 5,
+            "score": 0,
+            "steps": 86,
+            "suicides": 5,
+            "time": 0.003997802734375
+        },
+        "random_agent_1": {
+            "bombs": 6,
+            "crates": 13,
+            "invalid": 79,
+            "moves": 40,
+            "rounds": 5,
+            "score": 0,
+            "steps": 125,
+            "suicides": 5,
+            "time": 0.0030689239501953125
+        },
+        "random_agent_2": {
+            "bombs": 5,
+            "crates": 16,
+            "invalid": 72,
+            "moves": 16,
+            "rounds": 5,
+            "score": 0,
+            "steps": 93,
+            "suicides": 5,
+            "time": 0.0009927749633789062
+        }
+    },
+    "by_round": {
+        "Round 01 (2026-09-21 18-49-02)": {
+            "coins": 6,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        },
+        "Round 02 (2026-09-21 18-49-02)": {
+            "coins": 3,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        },
+        "Round 03 (2026-09-21 18-49-02)": {
+            "coins": 3,
+            "kills": 0,
+            "steps": 124,
+            "suicides": 4
+        },
+        "Round 04 (2026-09-21 18-49-02)": {
+            "coins": 1,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        },
+        "Round 05 (2026-09-21 18-49-03)": {
+            "coins": 5,
+            "kills": 0,
+            "steps": 400,
+            "suicides": 3
+        }
+    }
+}
