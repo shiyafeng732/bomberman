@@ -56,11 +56,17 @@ def act(self, game_state: dict) -> str:
         return action
 
     q = q_values(self, features)
+
+    # Never pick an action the features already mark as impossible (same mask as
+    # the DQN): a move whose move_ok flag is 0, or BOMB while our bomb is ticking.
+    # WAIT is never masked, so a choice always remains.
     allowed = np.ones(len(ACTIONS), dtype=bool)
     allowed[:4] = features[:4] > 0
     allowed[5] = features[21] > 0
-    
     q = np.where(allowed, q, -np.inf)
+
+    # Break ties randomly, otherwise the agent always prefers the first action.
+    best = np.flatnonzero(q == q.max())
     action = ACTIONS[np.random.choice(best)]
     self.logger.debug(f"Greedy action {action} with Q = {q.round(2)}")
     return action
